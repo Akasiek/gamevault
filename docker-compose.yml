@@ -1,0 +1,32 @@
+services:
+  database:
+    # Zdefiniuj obraz kontenera PostgreSQL
+    image: postgres:16.2-alpine
+
+    # Zawsze uruchamiaj kontener po jego zamknięciu, chyba że został ręcznie zatrzymany
+    restart: unless-stopped
+
+    # Zdefiniuj zmienne środowiskowe
+    environment:
+      # Nazwa bazy danych
+      POSTGRES_DB: "GameVault"
+      # Domyślny adminstrator bazy danych
+      POSTGRES_USER: "gamevault-admin"
+      # Pobierz hasło z pliku .env
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    # Zdefiniuj port
+    ports:
+      # Przekieruj port 5432 z kontenera na port 60824 hosta.
+      # Dzięki temu można połączyć się z bazą danych używając adresu localhost:60824
+      - "60824:5432"
+
+    # Zdefiniuj wolumin
+    volumes:
+      # Zapisz dane bazy danych w folderze ./database
+      # Przed wykonaniem komendy docker-compose up -d, upewni się, że folder ./database istnieje
+      - "./database:/var/lib/postgresql/data"
+
+  rust:
+    # Zdefiniuj obraz kontenera Rust
+    image: rust:1.77.2-alpine
