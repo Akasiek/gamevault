@@ -27,6 +27,3 @@ services:
       # Przed wykonaniem komendy docker-compose up -d, upewni się, że folder ./database istnieje
       - "./database:/var/lib/postgresql/data"
 
-  rust:
-    # Zdefiniuj obraz kontenera Rust
-    image: rust:1.77.2-alpine
