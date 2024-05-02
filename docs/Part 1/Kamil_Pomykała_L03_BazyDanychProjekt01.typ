@@ -84,4 +84,4 @@ Do implementacji systemu wykorzystam środowisko programistyczne *RustRover*. Ru
 
 Wdrożenie projektu końcowego zostanie zrealizowane na platformie *Railway*. Railway umożliwia na łatwe wdrożenie kontenerów Docker na serwerach w chmurze. Ich darmowy plan wystarczy na potrzeby projektu.
 
-Kontrola wersji projektu zostanie zrealizowana za pomocą narzędzia *Git* i platformy *GitHub*. Git umożliwia zarządzanie kodem źródłowym projektu, a GitHub umożliwia przechowywanie kodu źródłowego w chmurze. Repozytorium projektu będzie dostępne publicznie pod #underline(link("", [tym linkiem])).
+Kontrola wersji projektu zostanie zrealizowana za pomocą narzędzia *Git* i platformy *GitHub*. Git umożliwia zarządzanie kodem źródłowym projektu, a GitHub umożliwia przechowywanie kodu źródłowego w chmurze. Repozytorium projektu będzie dostępne publicznie pod #underline(link("https://github.com/Akasiek/gamevault", [tym linkiem])).
