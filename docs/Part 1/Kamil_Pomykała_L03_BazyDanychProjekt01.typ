@@ -59,14 +59,15 @@ Projekt nazwałem *"GameVault"*. Nazwa nawiązuje do przechowywania gier w wirtu
 
 == Technologie i rodzaj bazy danych
 
-Projekt zostanie zrealizowany w oparciu o bazę danych *PostgreSQL*. Jest to jeden z najpopularniejszych silników bazodanowych, który oferuje zaawansowane funkcje i możliwości. PostgreSQL jest otwartoźródłowym systemem, co dla mnie - zwolennika takich rozwiązań, jest bardzo ważne. W projekcie wykorzystam wersję 16.2 PostgreSQL, która podczas pisania tego dokumentu jest najnowszą wersją stabilną. Użyję tego #underline(link("https://hub.docker.com/layers/library/postgres/16.2-alpine/images/sha256-d2ae11f7207eb2c726b1678d7f98df2210759b8e5014d77afa9f77d014e33a9e?context=explore", [obrazu Dockerowego])).
+Projekt zostanie zrealizowany w oparciu o bazę danych *PostgreSQL*. Jest to jeden z najpopularniejszych silników bazodanowych, który oferuje zaawansowane funkcje i możliwości. PostgreSQL jest otwartoźródłowym systemem, co dla mnie - zwolennika takich rozwiązań, jest bardzo ważne. W projekcie wykorzystam wersję _16.2_ PostgreSQL, która podczas pisania tego dokumentu jest najnowszą wersją stabilną. Użyję tego #underline(link("https://hub.docker.com/layers/library/postgres/16.2-alpine/images/sha256-d2ae11f7207eb2c726b1678d7f98df2210759b8e5014d77afa9f77d014e33a9e?context=explore", [obrazu Dockerowego])).
 
-Do stworzenia systemu ORM wykorzystam język programowania *Rust*. Oprócz tego wykorzystam takie biblioteki jak: 
+DO obsługi bazy danych posłuży terminalowy *system ORM*. Do jego stworzenia wykorzystam język programowania *Rust*. Wykorzystam też poniższe biblioteki: 
 - *Diesel*: ORM dla języka Rust, który umożliwia łatwe zarządzanie bazą danych PostgreSQL.
-- *Clap*: Biblioteka do obsługi argumentów wiersza poleceń. Umożliwia łatwe tworzenie aplikacji konsolowych w języku Rust.
+- *terminal-menu*: Biblioteka do tworzenia menu w terminalu. Umożliwia łatwe zarządzanie interfejsem użytkownika w terminalu.
 - *Serde i Serde_json*: Biblioteka do serializacji i deserializacji danych w języku Rust. Umożliwia łatwe przekształcanie danych do formatu JSON.
 - *Inne biblioteki*, które mogą okazać się przydatne podczas implementacji systemu.
-W projekcie wykorzystam wersję 1.77.2 języka Rust. Nie jest to najnowsza wersja języka, ale jest to wersja, która jest stabilna i sprawdzona. Program będzie kompilowany do wersji wykonywalnych pod systemy Windows i Linux więc nie jest potrzebny Docker. Podczas implementacji systemu będę korzystał z najnowszych wersji bibliotek, które są dostępne w repozytorium Cargo.
+
+W projekcie wykorzystam wersję _1.77.2_ języka Rust. Nie jest to najnowsza wersja języka, ale jest to wersja, która jest stabilna i sprawdzona. Program będzie kompilowany do wersji wykonywalnych pod systemy Windows i Linux więc nie jest potrzebny Docker. Podczas implementacji systemu będę korzystał z najnowszych wersji bibliotek, które są dostępne w repozytorium Cargo.
 
 == Narzędzia
 
