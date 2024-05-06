@@ -8,7 +8,7 @@
 #align([
   == Bazy danych  
   = Projekt
-  === Określenie i analiza projektu
+  === Część 1. Określenie i analiza projektu
 ], center + horizon)
 
 
@@ -61,7 +61,7 @@ Projekt nazwałem *"GameVault"*. Nazwa nawiązuje do przechowywania gier w wirtu
 
 Projekt zostanie zrealizowany w oparciu o bazę danych *PostgreSQL*. Jest to jeden z najpopularniejszych silników bazodanowych, który oferuje zaawansowane funkcje i możliwości. PostgreSQL jest otwartoźródłowym systemem, co dla mnie - zwolennika takich rozwiązań, jest bardzo ważne. W projekcie wykorzystam wersję _16.2_ PostgreSQL, która podczas pisania tego dokumentu jest najnowszą wersją stabilną. Użyję tego #underline(link("https://hub.docker.com/layers/library/postgres/16.2-alpine/images/sha256-d2ae11f7207eb2c726b1678d7f98df2210759b8e5014d77afa9f77d014e33a9e?context=explore", [obrazu Dockerowego])).
 
-DO obsługi bazy danych posłuży terminalowy *system ORM*. Do jego stworzenia wykorzystam język programowania *Rust*. Wykorzystam też poniższe biblioteki: 
+Do obsługi bazy danych posłuży terminalowy *system ORM*. Do jego stworzenia wykorzystam język programowania *Rust*. Wykorzystam też poniższe biblioteki: 
 - *Diesel*: ORM dla języka Rust, który umożliwia łatwe zarządzanie bazą danych PostgreSQL.
 - *terminal-menu*: Biblioteka do tworzenia menu w terminalu. Umożliwia łatwe zarządzanie interfejsem użytkownika w terminalu.
 - *Serde i Serde_json*: Biblioteka do serializacji i deserializacji danych w języku Rust. Umożliwia łatwe przekształcanie danych do formatu JSON.
@@ -81,7 +81,7 @@ Lokalne i produkcyjne środowisko projektu zostanie zrealizowane w oparciu o kon
 
 Do zarządzania bazą danych użyję narzędzia *DataGrip* firmy *JetBrains*. Jest to zaawansowane narzędzie do zarządzania bazą danych, które oferuje wiele funkcji ułatwiających pracę z bazą danych. JetBrains oferuje darmową licencję dla studentów, co jest dodatkowym atutem tego narzędzia.
 
-Do implementacji systemu wykorzystam środowisko programistyczne *RustRover*. RustRover to nowe IDE firmy JetBrains, które oferuje wiele funkcji ułatwiających pracę z językiem Rust. RustRover oferuje integrację z Cargo, co umożliwia łatwe zarządzanie zależnościami w projekcie.
+Do implementacji systemu ORM wykorzystam środowisko programistyczne *RustRover*. RustRover to nowe IDE firmy JetBrains, które oferuje wiele funkcji ułatwiających pracę z językiem Rust. RustRover oferuje integrację z Cargo, co umożliwia łatwe zarządzanie zależnościami w projekcie.
 
 Wdrożenie projektu końcowego zostanie zrealizowane na platformie *Railway*. Railway umożliwia na łatwe wdrożenie kontenerów Docker na serwerach w chmurze. Ich darmowy plan wystarczy na potrzeby projektu.
 
