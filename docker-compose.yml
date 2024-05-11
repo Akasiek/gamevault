@@ -13,7 +13,7 @@ services:
       # Domyślny adminstrator bazy danych
       POSTGRES_USER: "gamevault-admin"
       # Pobierz hasło z pliku .env
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
 
     # Zdefiniuj port
     ports:
