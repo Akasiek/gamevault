@@ -1,1 +1,5 @@
 .env
+
+rust/target
+rust/.env
+rust/.idea
