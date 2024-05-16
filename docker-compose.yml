@@ -13,7 +13,7 @@ services:
       # Domyślny adminstrator bazy danych
       POSTGRES_USER: "gamevault-admin"
       # Pobierz hasło z pliku .env
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
 
     # Zdefiniuj port
     ports:
@@ -23,7 +23,7 @@ services:
 
     # Zdefiniuj wolumin
     volumes:
-      # Zapisz dane bazy danych w folderze ./database
-      # Przed wykonaniem komendy docker-compose up -d, upewni się, że folder ./database istnieje
-      - "./database:/var/lib/postgresql/data"
+      # Zapisz dane bazy danych w folderze ./db-data
+      # Przed wykonaniem komendy docker-compose up -d, upewni się, że folder ./db-data istnieje
+      - "./db-data:/var/lib/postgresql/data"
 
