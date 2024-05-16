@@ -1,1 +1,7 @@
 .env
+
+db-data
+
+rust/target
+rust/.env
+rust/.idea
