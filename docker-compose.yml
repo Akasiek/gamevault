@@ -1,3 +1,5 @@
+name: game_vault
+
 services:
   database:
     # Zdefiniuj obraz kontenera PostgreSQL
@@ -26,4 +28,3 @@ services:
       # Zapisz dane bazy danych w folderze ./db-data
       # Przed wykonaniem komendy docker-compose up -d, upewni się, że folder ./db-data istnieje
       - "./db-data:/var/lib/postgresql/data"
-
