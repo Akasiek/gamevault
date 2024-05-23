@@ -1,3 +1,6 @@
+pub mod db;
+mod ui;
+
 fn main() {
-    println!("Hello, world!");
+    ui::init_menu_loop();
 }
