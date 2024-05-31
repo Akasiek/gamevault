@@ -1,0 +1,3 @@
+apk add postgresql-contrib libpq-dev
+cd `pg_config --sharedir`
+echo "create extension pgcrypto" | psql -d GameVault -U gamevault-admin
