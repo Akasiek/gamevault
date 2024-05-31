@@ -37,11 +37,11 @@ INSERT INTO "Games" (type_id, name, description, min_players, max_players, playi
     ((SELECT id FROM "GameTypes" WHERE name = 'Strategy'), 'Catan', 'A classic board game of trading and building settlements on the island of Catan.', 3, 4, 90, 1995);
 
 INSERT INTO "Categories" (name) VALUES
-    ('Word Games'), ('Spies/Secret Agents'), ('Humor'), ('Fantasy'), ('Science Fiction'), ('Adventure'), ('Novel-based'),
+    ('Word Game'), ('Spies/Secret Agents'), ('Humor'), ('Fantasy'), ('Science Fiction'), ('Adventure'), ('Novel-based'),
     ('Horror'), ('Territory Building'), ('Medieval');
 
 INSERT INTO "GameCategories" (game_id, category_id) VALUES
-    ((SELECT id FROM "Games" WHERE name = 'Codenames'), (SELECT id FROM "Categories" WHERE name = 'Word Games')),
+    ((SELECT id FROM "Games" WHERE name = 'Codenames'), (SELECT id FROM "Categories" WHERE name = 'Word Game')),
     ((SELECT id FROM "Games" WHERE name = 'Codenames'), (SELECT id FROM "Categories" WHERE name = 'Spies/Secret Agents')),
     ((SELECT id FROM "Games" WHERE name = 'Telestrations'), (SELECT id FROM "Categories" WHERE name = 'Humor')),
     ((SELECT id FROM "Games" WHERE name = 'Gloomhaven'), (SELECT id FROM "Categories" WHERE name = 'Fantasy')),

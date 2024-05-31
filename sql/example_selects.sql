@@ -16,12 +16,12 @@ RIGHT JOIN "GameReviews" ON "Games"."id" = "GameReviews"."game_id"
 GROUP BY "Games"."id"
 HAVING AVG("GameReviews"."rating") >= 4;
 
--- Get all categories with more than 10 games and less than 20 games
+-- Get all categories with more than 5 games and less than 15 games
 SELECT "Categories"."name", COUNT("Games"."id") AS "game_count" FROM "Categories"
 INNER JOIN "GameCategories" ON "Categories"."id" = "GameCategories"."category_id"
 INNER JOIN "Games" ON "GameCategories"."game_id" = "Games"."id"
 GROUP BY "Categories"."id"
-HAVING COUNT("Games"."id") > 10 AND COUNT("Games"."id") < 20;
+HAVING COUNT("Games"."id") > 5 AND COUNT("Games"."id") < 15;
 
 -- Get all users and the number of reviews they have given
 SELECT "Users"."username", COUNT("GameReviews"."id") AS "review_count" FROM "Users"
@@ -33,8 +33,3 @@ GROUP BY "Users"."id";
 SELECT "Games"."name", "Games"."first_year_released" FROM "Games"
 WHERE "Games"."first_year_released" > 2010;
 
--- Get all games with releases in database that price sum is greater than 250
-SELECT "Games"."name", SUM("GameReleases"."price") AS "price_sum", COUNT("GameReleases"."price") AS "number_of_releases" FROM "Games"
-INNER JOIN "GameReleases" ON "Games"."id" = "GameReleases"."game_id"
-GROUP BY "Games"."id"
-HAVING SUM("GameReleases"."price") > 250;
