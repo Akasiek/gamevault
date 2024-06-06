@@ -1,3 +1,4 @@
+// Import and init Codly - better codeblocks
 #import "@preview/codly:0.2.1": *
 #let icon(codepoint) = {
   box(
@@ -7,7 +8,6 @@
   )
   h(0.1em)
 }
-
 #show: codly-init.with()
 #codly(languages: (
   sql: (name: "SQL", color: rgb("#4d9ddd"), icon: icon("../postgresql_brand.svg")),
@@ -18,13 +18,23 @@
 #set page(numbering: "1", margin: (x: 2.5cm, y: 2.5cm))
 #set par(justify: true, leading: 0.9em, linebreaks: "optimized")
 #set block(spacing: 1.45em, above: 1.3em)
+// Set font and color for inline code
+#show raw: set text(font: "JetBrains Mono", fill: rgb(42, 150, 70, 255) )
+// Change h1 to be centered and uppercase
+#show heading.where(level: 1): set align(center);
+
+
+
+/* --- End of configuration --- */
+
+
 
 #align(text(smallcaps("POLITECHNIKA RZESZOWSKA"), size: 0.8em), right + top)
 
 #align([
   == Bazy danych - Projekt
   = System zarządzania kolekcją gier planszowych
-  === Część 2. Diagram DB i SQL
+  === Części 1. i 2.
 ], center + horizon)
 
 
@@ -39,17 +49,86 @@
 
 #pagebreak()
 
-= Prezentacja diagramu ERD
+= #smallcaps([Część 1.])
+
+== Tematyka i zakres projektu
+
+Projekt skupia się na stworzenie systemu zarządzania kolekcją gier planszowych. Głównym celem projektu jest stworzenie bazy danych, która umożliwi katalogowanie gier planszowych, mechanik tych gier, recenzji oraz historii wydań. 
+
+System pozwala na zarządzanie kolekcją jednej osoby lub grupy domowników. W projekcie zostaną zaimplementowane dwie główne role użytkowników: administratora, który ma pełen dostęp do funkcji systemu, oraz zwykłego użytkownika, który może korzystać z podstawowych funkcji przeglądania bazy gier oraz ma możliwość dodania recenzji. Dzięki takiemu podejściu użytkownicy mogą bez obaw o stratę danych, zarządzać swoją kolekcją gier planszowych.
+
+Projekt nazwałem *"GameVault"*. Nazwa nawiązuje do przechowywania gier w wirtualnym "skarbcu".
+
+=== Zagadnienia związane z tematem
+
+- *Katalogowanie gier*: Należy opracować strukturę bazy danych, która pozwoli na przechowywanie informacji o grach planszowych, takich jak nazwa gry, gatunek, liczba graczy, czas trwania rozgrywki, opis (gdzie powinny znaleźć się dodatkowe informacje o grze). 
+- *Mechaniki gier*: System powinien umożliwiać przypisanie mechanik gry do danej gry planszowej. Mechaniki gier to zestaw reguł, które określają sposób rozgrywki. Każda gra może posiadać wiele mechanik.
+- *Recenzje gier*: Użytkownicy systemu mogą dodawać recenzje gier planszowych. Recenzje powinny zawierać ocenę gry oraz opis. Każda gra może posiadać wiele recenzji.
+- *Historia wydań*: System powinien przechowywać informacje o wydaniach danej gry planszowej. Historia wydań zawiera informacje o dacie wydania, wydawcy, numerze wydania oraz opisie gdzie można znaleźć dodatkowe informacje o wydaniu. Każda gra może posiadać wiele wydań.
+- *Role użytkowników*: System powinien umożliwiać zarządzanie rolami użytkowników. Administrator ma pełen dostęp do funkcji systemu, natomiast zwykły użytkownik ma ograniczony dostęp do funkcji systemu.
+
+=== Funkcje bazy danych i ich priorytety
+
+1. *Przechowywanie informacji o grach planszowych*
+  - Priorytet: _*Wysoki*_
+  - Opis: Najważniejsza funkcjonalność systemu, która umożliwia przechowywanie informacji o grach planszowych. Bez tej funkcjonalności projekt nie ma za dużego sensu.
+2. *Przechowywanie informacji o mechanikach gier*
+  - Priorytet: _*Średni*_
+  - Opis: Funkcjonalność umożliwiająca przypisanie mechanik gry do danej gry planszowej. Dzięki tej funkcjonalności opisy gier stają się bardziej kompleksowe. Każdy użytkownik z dostępem do bazy gier może dowiedzieć się, jakie mechaniki posiada dana gra i podejrzeć je podczas rozgrywki.
+#pagebreak()
+3. *Przechowywanie informacji o recenzjach gier*
+  - Priorytet: _*Średni*_
+  - Opis: Funkcjonalność umożliwiająca dodawanie recenzji gier planszowych. Recenzje gier są ważne dla użytkowników, którzy chcą znaleźć informacje zwrotne na temat danej gry. Dzięki tej funkcjonalności użytkownicy mogą dzielić się swoimi opiniami na temat gier planszowych.
+4. *Przechowywanie informacji o historii wydań gier*
+  - Priorytet: _*Niski*_
+  - Opis: Funkcjonalność umożliwiająca przechowywanie informacji o wydaniach danej gry planszowej. Ma najniższy priorytet, ponieważ nie jest to funkcjonalność, która jest niezbędna do działania systemu. Jednakże, dzięki tej funkcjonalności użytkownicy mogą lepiej zarządzać swoją kolekcją gier planszowych.
+
+== Technologie i narzędzia
+
+=== Technologie i rodzaj bazy danych
+
+Projekt zostanie zrealizowany w oparciu o bazę danych *PostgreSQL*. Jest to jeden z najpopularniejszych silników bazodanowych, który oferuje zaawansowane funkcje i możliwości. PostgreSQL jest otwartoźródłowym systemem, co dla mnie - zwolennika takich rozwiązań, jest bardzo ważne. W projekcie wykorzystam wersję _16.2_ PostgreSQL, która podczas pisania tego dokumentu jest najnowszą wersją stabilną. Użyję tego #underline(link("https://hub.docker.com/layers/library/postgres/16.2-alpine/images/sha256-d2ae11f7207eb2c726b1678d7f98df2210759b8e5014d77afa9f77d014e33a9e?context=explore", [obrazu Dockerowego])).
+
+Do obsługi bazy danych posłuży terminalowy *system ORM*. Do jego stworzenia wykorzystam język programowania *Rust*. Wykorzystam też poniższe biblioteki: 
+- *Diesel*: ORM dla języka Rust, który umożliwia łatwe zarządzanie bazą danych PostgreSQL.
+- *terminal-menu*: Biblioteka do tworzenia menu w terminalu. Umożliwia łatwe zarządzanie interfejsem użytkownika w terminalu.
+- *Serde i Serde_json*: Biblioteka do serializacji i deserializacji danych w języku Rust. Umożliwia łatwe przekształcanie danych do formatu JSON.
+- *Inne biblioteki*, które mogą okazać się przydatne podczas implementacji systemu.
+
+W projekcie wykorzystam wersję _1.77.2_ języka Rust. Nie jest to najnowsza wersja języka, ale jest to wersja, która jest stabilna i sprawdzona. Program będzie kompilowany do wersji wykonywalnych pod systemy Windows i Linux więc nie jest potrzebny Docker. Podczas implementacji systemu będę korzystał z najnowszych wersji bibliotek, które są dostępne w repozytorium Cargo.
+
+=== Narzędzia
+
+Przygotowanie dokumentacji projektu zostanie zrealizowane w języku *Typst*. Typst to alternatywne narzędzie do LaTeX, które umożliwia tworzenie dokumentacji w sposób tekstowy.
+
+Do stworzenia diagramów ERD użyję narzędzia *dbdiagram.io*. Jest to narzędzie online, które wykorzystywałem już w przeszłości. W szczególności podoba mi się fakt, że diagramy tworzy się w sposób tekstowy. Dzięki temu można skupić się na projektowaniu bazy danych, a nie na rysowaniu diagramów.
+
+#pagebreak()
+
+Lokalne i produkcyjne środowisko projektu zostanie zrealizowane w oparciu o kontenery *Docker* i narzędzie *Docker Compose*. Docker umożliwia łatwe zarządzanie środowiskami deweloperskimi oraz produkcyjnymi. Repozytoria Dockerowe zawierają gotowe obrazy PostgreSQL i Rust, które można zmodyfikować według własnych potrzeb. Docker Compose umożliwia zarządzanie wieloma kontenerami jednocześnie za pomocą jednego pliku konfiguracyjnego `docker-compose.yml`.
+
+Do zarządzania bazą danych użyję narzędzia *DataGrip* firmy *JetBrains*. Jest to zaawansowane narzędzie do zarządzania bazą danych, które oferuje wiele funkcji ułatwiających pracę z bazą danych. JetBrains oferuje darmową licencję dla studentów, co jest dodatkowym atutem tego narzędzia.
+
+Do implementacji systemu ORM wykorzystam środowisko programistyczne *RustRover*. RustRover to nowe IDE firmy JetBrains, które oferuje wiele funkcji ułatwiających pracę z językiem Rust. RustRover oferuje integrację z Cargo, co umożliwia łatwe zarządzanie zależnościami w projekcie.
+
+Wdrożenie projektu końcowego zostanie zrealizowane na platformie *Railway*. Railway umożliwia na łatwe wdrożenie kontenerów Docker na serwerach w chmurze. Ich darmowy plan wystarczy na potrzeby projektu.
+
+Kontrola wersji projektu zostanie zrealizowana za pomocą narzędzia *Git* i platformy *GitHub*. Git umożliwia zarządzanie kodem źródłowym projektu, a GitHub umożliwia przechowywanie kodu źródłowego w chmurze. Repozytorium projektu będzie dostępne publicznie pod #underline(link("https://github.com/Akasiek/gamevault", [tym linkiem])).
+
+#pagebreak()
+= #smallcaps([Część 2.])
+
+== Prezentacja diagramu ERD
 
 Diagram ERD przedstawia strukturę bazy danych, która będzie wykorzystywana w tworzonym projekcie. Zawiera on informacje o encjach, atrybutach oraz relacjach między nimi.
 
 Diagram stworzyłem przy pomocy programu online "dbdiagram.io". Wybór tego narzędzia wynika z mojego wcześniejszego doświadczenia z jego użyciem oraz z użycia języka DBML do tworzenia diagramów. #underline(link("https://dbdiagram.io/d/GameVault-664118429e85a46d55a31d24")[Link do diagramu na dbdiagram.io]).
 
-#figure(image("images/diagram.png", width: 100%), caption: "Diagram ERD bazy danych projektu.")
+#figure(image("img/diagram.png", width: 100%), caption: "Diagram ERD bazy danych projektu.")
 
-== Opis tabel i ich funkcji
+=== Opis tabel i ich funkcji
 
-=== Tabela `Games`
+==== Tabela `Games`
 
 Tabela `Games` jest główną tabelą w bazie danych. Zawiera informacje o grach planszowych, takie jak nazwa, opis, minimalna i maksymalna liczba graczy, średni czas gry oraz kategorie. Kluczem głównym tej tabeli jest `id`, podobnie jak w pozostałych tabelach.
 
@@ -60,41 +139,41 @@ Tabela posiada relacje z tabelami `GameTypes`, `Categories`, `Mechanics`, `GameR
 - relacja z tabelą `GameReleases` jest typu jeden do wielu, ponieważ jedna gra może mieć wiele wydań, ale jedno wydanie może dotyczyć tylko jednej gry. Relacja jest zrealizowana za pomocą klucza obcego `game_id` w tabeli `GameReleases`.
 - relacja z tabelą `GameReviews` jest typu jeden do wielu, ponieważ jedna gra może mieć wiele recenzji, ale jedna recenzja dotyczy tylko jednej gry. Relacja jest zrealizowana za pomocą klucza obcego `game_id` w tabeli `GameReviews`.
 
-=== Table `GameTypes`
+==== Table `GameTypes`
 
 Tabela `GameTypes` przechowuje informacje o typach gier planszowych. Zawiera jedynie pole `name`, które jest unikalne i służy do identyfikacji typu.
 
 Tabela ta posiada relację z tabelą `Games` opisaną wcześniej.
 
-=== Tabela `Categories`
+==== Tabela `Categories`
 
 Tabela `Categories` przechowuje informacje o kategoriach gier planszowych. Zawiera jedynie pole `name`, które jest unikalne i służy do identyfikacji kategorii.
 
 Tabela ta posiada relację z tabelą `Games` opisaną wcześniej.
 
-=== Tabela `Mechanics`
+==== Tabela `Mechanics`
 
 Tabela `Mechanics` przechowuje informacje o mechanikach gier planszowych. Zawiera pola `name` oraz `description`, z których pierwsze jest unikalne i służy do identyfikacji mechaniki.
 
 Tabela ta posiada relację z tabelą `Games` opisaną wcześniej.
 
-=== Tabela asocjacyjna `GameMechanics`
+==== Tabela asocjacyjna `GameMechanics`
 
 Tabela `GameMechanics` jest tabelą pośredniczącą między tabelami `Games` i `Mechanics`. Zawiera pola `game_id` oraz `mechanic_id`, które są kluczami obcymi do odpowiednich tabel. Te pola tworzą jeden klucz główny tej tabeli, który zachowuje unikalność relacji między grami a mechanikami.
 
-=== Tabela `GameReleases`
+==== Tabela `GameReleases`
 
 Tabela `GameReleases` przechowuje informacje o wydaniach gier planszowych. Zawiera pola `game_id`, `release_date`, `publisher`, `studio`, `language`, `price` oraz `extra_information`. 
 
 Tabela ta posiada relację z tabelą `Games` opisaną wcześniej.
 
-=== Tabela `GameReviews`
+==== Tabela `GameReviews`
 
 Tabela `GameReviews` przechowuje informacje o recenzjach gier planszowych, pisanych przez użytkowników. Zawiera pola `game_id`, `user_id`, `rating` oraz `review`. 
 
 Tabela ta posiada relację z tabelą `Games` opisaną wcześniej oraz relację z tabelą `Users`. Relacja z tabelą `Users` jest typu jeden do wielu, ponieważ jedna recenzja może być napisana przez jednego użytkownika, ale jeden użytkownik może napisać wiele recenzji. Relacja ta jest zrealizowana za pomocą klucza obcego `user_id` w tabeli `GameReviews`.
 
-=== Tabela `Users`
+==== Tabela `Users`
 
 Tabela `Users` przechowuje informacje o użytkownikach kolekcji. Zawiera pola `username`, `email`, `password`, `first_name`, `last_name` oraz `role`, która określa rolę użytkownika w systemie.
 
@@ -102,9 +181,9 @@ Rola może być jedną z dwóch wartości: `USER` lub `ADMIN`. Ten wybór jest z
 
 Tabela ta posiada relację z tabelą `GameReviews` opisaną wcześniej.
 
-= Zapytania SQL
+== Zapytania SQL
 
-== Zapytania tworzące tabele
+=== Zapytania tworzące tabele
 
 Poniżej znajdują się zapytania SQL tworzące tabele w bazie danych projektu. Zapytania te zawierają definicje tabel, kluczy głównych, kluczy obcych oraz ograniczeń.
 
@@ -193,56 +272,27 @@ CREATE TABLE "GameReleases"
 );
 ```
 
-== Zapytania wprowadzające dane
+=== Zapytania wprowadzające dane
 
 Poniżej znajdują się zapytania SQL wprowadzające przykładowe dane do tabel.
 
-=== Tabela `GameCategories`
+==== Tabela `GameCategories`
 
 ```sql
 INSERT INTO "GameTypes" (name) VALUES
     ('Abstract'), ('Area Control'), ('Cooperative'), ('Deck Building'), ('Economic'), ('Family'), ('Party'), ('Thematic'), ('War Games'), ('Strategy');
 ```
 
-=== Tabela `Games`
+==== Tabela `Games`
 
 ```sql
 INSERT INTO "Games" (type_id, name, description, min_players, max_players, playing_time, first_year_released) VALUES
     ((SELECT id FROM "GameTypes" WHERE name = 'Abstract'), 'Chess', 'A classic two-player strategy game of capturing the opponent''s king.', 2, 2, 30, 1475),
     ((SELECT id FROM "GameTypes" WHERE name = 'Abstract'), 'Go', 'An abstract strategy game for two players involving surrounding and capturing your opponent''s stones.', 2, 2, 60, -2200),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Abstract'), 'Hive', 'An abstract strategy game where players compete to surround the opponent''s queen bee.', 2, 4, 30, 2001),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Area Control'), 'Risk', 'A classic board game of world domination through dice rolling and strategic troop placement.', 2, 6, 120, 1957),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Area Control'), 'Carcassonne', 'A tile-laying game where players compete to claim land and build features on a growing map.', 2, 5, 45, 2000),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Area Control'), 'Twilight Imperium', 'A grand strategy game of galactic conquest and diplomacy for experienced players.', 3, 8, 360, 2000),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Cooperative'), 'Pandemic', 'A cooperative game where players work together to stop the spread of diseases around the world.', 2, 4, 45, 2008),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Cooperative'), 'Forbidden Island', 'A cooperative game where players work together to recover treasures from a sinking island.', 2, 4, 30, 2010),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Cooperative'), 'Spirit Island', 'A cooperative game where players take on the roles of powerful spirits defending their island from colonizers.', 1, 4, 90, 2017),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Deck Building'), 'Dominion', 'The original deck-building game where players compete to build the most efficient deck of cards.', 2, 4, 30, 2008),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Deck Building'), 'Star Realms', 'A fast-paced deck-building game set in space where players battle for control of the galaxy.', 2, 6, 20, 2014),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Deck Building'), 'Clank!', 'A deck-building adventure game where players explore a dungeon, collect treasure, and avoid the dragon.', 2, 4, 60, 2016),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Economic'), 'Acquire', 'A classic economic game where players invest in and merge companies to earn the most money.', 2, 6, 90, 1964),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Economic'), 'Power Grid', 'A strategic economic game where players compete to power the most cities and earn the most money.', 2, 6, 120, 2004),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Economic'), 'Food Chain Magnate', 'A cutthroat economic game where players run competing fast food chains and try to outmaneuver their rivals.', 2, 5, 180, 2015),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Family'), 'Ticket to Ride', 'A family-friendly game of building train routes across North America.', 2, 5, 45, 2004),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Family'), 'Dixit', 'A creative storytelling game where players interpret abstract illustrations and try to match each other''s descriptions.', 3, 6, 30, 2008),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Family'), 'Everdell', 'A charming game of building a woodland critter village and attracting adorable critters to live there.', 1, 4, 80, 2018),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Family'), 'Scrabble', 'A classic word game where players compete to create words and earn points based on letter values.', 2, 4, 90, 1938),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Party'), 'Codenames', 'A word association game where players give one-word clues to help their teammates guess the correct words.', 4, 8, 15, 2015),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Party'), 'Telestrations', 'A drawing and guessing game where players pass around sketchbooks and try to interpret each other''s drawings.', 4, 12, 30, 2009),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Party'), 'Just One', 'A cooperative party game where players try to guess a word based on one-word clues, but duplicate clues are eliminated.', 3, 7, 20, 2018),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Thematic'), 'Arkham Horror', 'A cooperative game of cosmic horror where players investigate mysteries and battle otherworldly monsters.', 1, 8, 240, 1987),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Thematic'), 'Gloomhaven', 'A cooperative campaign game of tactical combat and exploration in a dark fantasy world.', 1, 4, 120, 2017),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Thematic'), 'Malhya: Lands of Legends', 'A narrative-driven adventure game set in a rich fantasy world with branching storylines and epic quests.', 1, 5, 180, 2024),
-    ((SELECT id FROM "GameTypes" WHERE name = 'War Games'), 'Axis & Allies', 'A classic World War II strategy game of global conflict and military strategy.', 2, 5, 180, 1981),
-    ((SELECT id FROM "GameTypes" WHERE name = 'War Games'), 'Twilight Struggle', 'A two-player game of Cold War politics and strategy where players compete for global influence.', 2, 2, 180, 2005),
-    ((SELECT id FROM "GameTypes" WHERE name = 'War Games'), 'Root', 'A strategic war game of woodland creatures vying for control of the forest and its resources.', 2, 4, 90, 2018),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Strategy'), 'Terraforming Mars', 'A strategic game of colonizing and terraforming Mars to make it habitable for human life.', 1, 5, 120, 2016),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Strategy'), 'Scythe', 'A strategic game of farming, combat, and resource management set in an alternate history 1920s Europe.', 1, 7, 115, 2016),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Strategy'), 'The Castles of Burgundy: Special Edition', 'A strategic game of building and developing a medieval estate through tile placement and resource management.', 1, 4, 90, 2023),
-    ((SELECT id FROM "GameTypes" WHERE name = 'Strategy'), 'Catan', 'A classic board game of trading and building settlements on the island of Catan.', 3, 4, 90, 1995);
+    ...
 ```
 
-=== Tabele `Categories` i `GameCategories`
+==== Tabele `Categories` i `GameCategories`
 
 ```sql
 INSERT INTO "Categories" (name) VALUES
@@ -251,20 +301,10 @@ INSERT INTO "Categories" (name) VALUES
 INSERT INTO "GameCategories" (game_id, category_id) VALUES
     ((SELECT id FROM "Games" WHERE name = 'Codenames'), (SELECT id FROM "Categories" WHERE name = 'Word Games')),
     ((SELECT id FROM "Games" WHERE name = 'Codenames'), (SELECT id FROM "Categories" WHERE name = 'Spies/Secret Agents')),
-    ((SELECT id FROM "Games" WHERE name = 'Telestrations'), (SELECT id FROM "Categories" WHERE name = 'Humor')),
-    ((SELECT id FROM "Games" WHERE name = 'Gloomhaven'), (SELECT id FROM "Categories" WHERE name = 'Fantasy')),
-    ((SELECT id FROM "Games" WHERE name = 'Gloomhaven'), (SELECT id FROM "Categories" WHERE name = 'Adventure')),
-    ((SELECT id FROM "Games" WHERE name = 'Spirit Island'), (SELECT id FROM "Categories" WHERE name = 'Fantasy')),
-    ((SELECT id FROM "Games" WHERE name = 'Clank!'), (SELECT id FROM "Categories" WHERE name = 'Fantasy')),
-    ((SELECT id FROM "Games" WHERE name = 'Arkham Horror'), (SELECT id FROM "Categories" WHERE name = 'Horror')),
-    ((SELECT id FROM "Games" WHERE name = 'Arkham Horror'), (SELECT id FROM "Categories" WHERE name = 'Adventure')),
-    ((SELECT id FROM "Games" WHERE name = 'Arkham Horror'), (SELECT id FROM "Categories" WHERE name = 'Novel-based')),
-    ((SELECT id FROM "Games" WHERE name = 'Scythe'), (SELECT id FROM "Categories" WHERE name = 'Science Fiction')),
-    ((SELECT id FROM "Games" WHERE name = 'The Castles of Burgundy: Special Edition'), (SELECT id FROM "Categories" WHERE name = 'Medieval')),
-    ((SELECT id FROM "Games" WHERE name = 'The Castles of Burgundy: Special Edition'), (SELECT id FROM "Categories" WHERE name = 'Territory Building'));
+    ...
 ```
 
-=== Tabele `Mechanics` i `GameMechanics`
+==== Tabele `Mechanics` i `GameMechanics`
 
 ```sql
 INSERT INTO "Mechanics" (name) VALUES
@@ -273,51 +313,35 @@ INSERT INTO "Mechanics" (name) VALUES
 INSERT INTO "GameMechanics" (game_id, mechanic_id) VALUES
     ((SELECT id FROM "Games" WHERE name = 'Carcassonne'), (SELECT id FROM "Mechanics" WHERE name = 'Tile Placement')),
     ((SELECT id FROM "Games" WHERE name = 'Carcassonne'), (SELECT id FROM "Mechanics" WHERE name = 'Map Addition')),
-    ((SELECT id FROM "Games" WHERE name = 'Dominion'), (SELECT id FROM "Mechanics" WHERE name = 'Hand Management')),
-    ((SELECT id FROM "Games" WHERE name = 'Dominion'), (SELECT id FROM "Mechanics" WHERE name = 'Deck Building')),
-    ((SELECT id FROM "Games" WHERE name = 'Power Grid'), (SELECT id FROM "Mechanics" WHERE name = 'Auction/Bidding')),
-    ((SELECT id FROM "Games" WHERE name = 'Root'), (SELECT id FROM "Mechanics" WHERE name = 'Hand Management')),
-    ((SELECT id FROM "Games" WHERE name = 'Root'), (SELECT id FROM "Mechanics" WHERE name = 'Dice Rolling')),
-    ((SELECT id FROM "Games" WHERE name = 'Everdell'), (SELECT id FROM "Mechanics" WHERE name = 'Hand Management')),
-    ((SELECT id FROM "Games" WHERE name = 'Everdell'), (SELECT id FROM "Mechanics" WHERE name = 'Income')),
-    ((SELECT id FROM "Games" WHERE name = 'Everdell'), (SELECT id FROM "Mechanics" WHERE name = 'End Game Bonuses')),
-    ((SELECT id FROM "Games" WHERE name = 'Scrabble'), (SELECT id FROM "Mechanics" WHERE name = 'Tile Placement')),
-    ((SELECT id FROM "Games" WHERE name = 'Scrabble'), (SELECT id FROM "Mechanics" WHERE name = 'Hand Management')),
-    ((SELECT id FROM "Games" WHERE name = 'Scrabble'), (SELECT id FROM "Mechanics" WHERE name = 'End Game Bonuses'));
+    ...
 ```
 
-=== Tabele `GameReviews` i `Users`
+==== Tabele `GameReviews` i `Users`
 
 ```sql
 INSERT INTO "Users" (username, email, password, role) VALUES
-    ('admin', '174725@stud.prz.edu.pl', '$2y$10$xjw.5TWX7uzvlWEsyaf6BuRhIXv2M2zWC9NcsIyGVe50DefmQYOEq', 'ADMIN'),
-    ('testuser', 'kpomykala2002@gmail.com', '$2y$10$H.5U1jmjzdLY44BecfDp5Ojc2UVI74FaCqaHFMcFix8fez3dhPfsC', 'USER');
+    ('admin', '174725@stud.prz.edu.pl', crypt('kamil123', gen_salt('bf', 10)), 'ADMIN'),
+    ('testuser', 'kpomykala2002@gmail.com', crypt('test123', gen_salt('bf', 10)), 'USER');
 
 INSERT INTO "GameReviews" (game_id, user_id, rating, review) VALUES
     ((SELECT id FROM "Games" WHERE name = 'Carcassonne'), (SELECT id FROM "Users" WHERE username = 'testuser'), 4, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam id consequat lacus. Cras ultricies, nunc molestie placerat tincidunt, enim sapien imperdiet nulla, sit amet tincidunt felis lorem pretium erat.'),
-    ((SELECT id FROM "Games" WHERE name = 'Dominion'), (SELECT id FROM "Users" WHERE username = 'testuser'), 5, 'Integer eget ligula nec nisi accumsan dignissim nec eget libero. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Ut suscipit volutpat odio in tempus. Sed gravida a lectus sed vulputate. Maecenas eget diam a ante consequat consequat et sit amet diam. '),
-    ((SELECT id FROM "Games" WHERE name = 'Power Grid'), (SELECT id FROM "Users" WHERE username = 'admin'), 2, 'Morbi porta libero ut nunc fermentum ullamcorper. Nunc nulla ex, iaculis ut sapien vitae, mollis accumsan ex. Etiam varius nisi ut consectetur placerat. Aliquam aliquam vel purus quis ultricies. Phasellus eget metus sit amet erat mollis dapibus nec ac mi. Quisque porta tincidunt sapien eu maximus. Nullam ut dictum ipsum. '),
-    ((SELECT id FROM "Games" WHERE name = 'Root'), (SELECT id FROM "Users" WHERE username = 'admin'), 4, null),
-    ((SELECT id FROM "Games" WHERE name = 'Root'), (SELECT id FROM "Users" WHERE username = 'testuser'), 5, null),
-    ((SELECT id FROM "Games" WHERE name = 'Everdell'), (SELECT id FROM "Users" WHERE username = 'testuser'), 3, null),
-    ((SELECT id FROM "Games" WHERE name = 'Scrabble'), (SELECT id FROM "Users" WHERE username = 'admin'), 1, null);
+    ...
 ```
 
-=== Tabela `GameReleases`
+Funkcje `crypt()` i `gen_salt()` służą do zabezpieczenia haseł użytkowników przed przechowywaniem ich w postaci jawnej w bazie danych. Pochodzą one z rozszerzenia `pgcrypto`, które jest dostępne w PostgreSQL.
+
+==== Tabela `GameReleases`
 
 ```sql
 INSERT INTO "GameReleases" (game_id, release_date, publisher, studio, language, price, extra_information) VALUES
     ((SELECT id FROM "Games" WHERE name = 'Carcassonne'), '2020-01-01', 'Bard Centrum Gier', 'Bard Centrum Gier', 'Polish', 101.00, null),
     ((SELECT id FROM "Games" WHERE name = 'Catan'), '2023-06-01', 'NeoTroy Games', null, 'Turkish', 150.00, 'Limited edition'),
-    ((SELECT id FROM "Games" WHERE name = 'Catan'), '2021-09-10', 'Albi, KOSMOS', 'KOSMOS', 'Czech', 98.21, 'Alternative name: "Catan: Základní hra". Used'),
-    ((SELECT id FROM "Games" WHERE name = 'Catan'), '2022-06-30', 'KOSMOS', 'KOSMOS', 'German', 129.99, 'Alternative name: "Catan: Das Spiel"'),
-    ((SELECT id FROM "Games" WHERE name = 'Catan'), '2021-01-12', 'Swan Panasia Co., Ltd.', 'KOSMOS', 'Chinese', 150.00, 'Alternative name: "卡坦島". Imported'),
-    ((SELECT id FROM "Games" WHERE name = 'Dominion'), '2013-12-12', 'Ystari Games', null, 'French', 80.00, 'Third printing');
+    ...
 ```
 
-== Przykładowe zapytania selekcyjne
+=== Przykładowe zapytania selekcyjne
 
-=== Zapytanie o gry z kategorii "Fantasy"
+==== Zapytanie o gry z kategorii "Fantasy"
 
 ```sql
 SELECT "Games"."name" FROM "Games"
@@ -326,7 +350,7 @@ INNER JOIN "Categories" ON "GameCategories"."category_id" = "Categories"."id"
 WHERE "Categories"."name" = 'Fantasy';
 ```
 
-=== Zapytanie o gry z mechaniką "Hand Management"
+==== Zapytanie o gry z mechaniką "Hand Management"
 
 ```sql
 SELECT "Games"."name" FROM "Games"
@@ -335,7 +359,8 @@ INNER JOIN "Mechanics" ON "GameMechanics"."mechanic_id" = "Mechanics"."id"
 WHERE "Mechanics"."name" = 'Hand Management';
 ```
 
-=== Zapytanie o gry, które posiadają średnią recenzji powyżej 4
+#pagebreak()
+==== Zapytanie o gry, które posiadają średnią recenzji powyżej 4
 
 ```sql
 SELECT "Games"."name", AVG("GameReviews"."rating") AS "average_rating", COUNT("GameReviews"."rating") AS "number_of_ratings" FROM "Games"
@@ -344,7 +369,7 @@ GROUP BY "Games"."id"
 HAVING AVG("GameReviews"."rating") >= 4;
 ```
 
-=== Zapytanie o kategorie, które posiadają więcej niż 10, ale mniej niż 20 gier
+==== Zapytanie o kategorie, które posiadają więcej niż 10, ale mniej niż 20 gier
 
 ```sql
 SELECT "Categories"."name", COUNT("Games"."id") AS "game_count" FROM "Categories"
@@ -354,7 +379,7 @@ GROUP BY "Categories"."id"
 HAVING COUNT("Games"."id") > 10 AND COUNT("Games"."id") < 20;
 ```
 
-=== Zapytanie o użytkowników z rolą "USER" i ilością napisanych recenzji
+==== Zapytanie o użytkowników z rolą "USER" i ilością napisanych recenzji
 
 ```sql
 SELECT "Users"."username", COUNT("GameReviews"."id") AS "review_count" FROM "Users"
@@ -363,19 +388,9 @@ WHERE "Users"."role" = 'USER'
 GROUP BY "Users"."id";
 ```
 
-=== Zapytanie o gry wydane po 2010 roku
+==== Zapytanie o gry wydane po 2010 roku
 
 ```sql
 SELECT "Games"."name", "Games"."first_year_released" FROM "Games"
 WHERE "Games"."first_year_released" > 2010;
-```
-
-#pagebreak()
-=== Zapytanie o gry, których zsumowana cena wydań przekracza 250 zł
-
-```sql
-SELECT "Games"."name", SUM("GameReleases"."price") AS "price_sum", COUNT("GameReleases"."price") AS "number_of_releases" FROM "Games"
-INNER JOIN "GameReleases" ON "Games"."id" = "GameReleases"."game_id"
-GROUP BY "Games"."id"
-HAVING SUM("GameReleases"."price") > 250;
 ```
