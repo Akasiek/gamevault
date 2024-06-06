@@ -75,8 +75,8 @@ INSERT INTO "GameMechanics" (game_id, mechanic_id) VALUES
     ((SELECT id FROM "Games" WHERE name = 'Scrabble'), (SELECT id FROM "Mechanics" WHERE name = 'End Game Bonuses'));
 
 INSERT INTO "Users" (username, email, password, role) VALUES
-    ('admin', '174725@stud.prz.edu.pl', '$2y$10$xjw.5TWX7uzvlWEsyaf6BuRhIXv2M2zWC9NcsIyGVe50DefmQYOEq', 'ADMIN'),
-    ('testuser', 'kpomykala2002@gmail.com', '$2y$10$H.5U1jmjzdLY44BecfDp5Ojc2UVI74FaCqaHFMcFix8fez3dhPfsC', 'USER');
+    ('admin', '174725@stud.prz.edu.pl', crypt('kamil123', gen_salt('bf', 10)), 'ADMIN'),
+    ('testuser', 'kpomykala2002@gmail.com', crypt('test123', gen_salt('bf', 10)), 'USER');
 
 INSERT INTO "GameReviews" (game_id, user_id, rating, review) VALUES
     ((SELECT id FROM "Games" WHERE name = 'Carcassonne'), (SELECT id FROM "Users" WHERE username = 'testuser'), 4, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam id consequat lacus. Cras ultricies, nunc molestie placerat tincidunt, enim sapien imperdiet nulla, sit amet tincidunt felis lorem pretium erat.'),
