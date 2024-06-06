@@ -2,6 +2,6 @@
 
 db-data
 
-rust/target
-rust/.env
-rust/.idea
+rust_orm/target
+rust_orm/.env
+rust_orm/.idea
