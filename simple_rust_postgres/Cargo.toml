@@ -1,0 +1,12 @@
+[package]
+name = "simple_rust_postgres"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.38.0", features = ["rt-multi-thread", "macros"] }
+sqlx = { version = "0.7.4", features = ["runtime-tokio", "postgres"] }
+
+color-print = "0.3.6"
+dotenvy = "0.15.7"
+anyhow = "1.0.86"
