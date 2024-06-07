@@ -42,7 +42,7 @@ pub fn ask_for_selection(options: Vec<String>, prompt: &str) -> String {
 }
 
 pub fn ask_for_editor(prompt: &str) -> Option<String> {
-    let review = Editor::new("Write your review:")
+    let review = Editor::new(prompt)
         .with_editor_command("micro".as_ref())
         .prompt();
 
