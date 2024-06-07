@@ -47,6 +47,16 @@ pub fn init_menu_loop(login: Login) {
 }
 
 fn build_menu(user: &User) -> TerminalMenu {
+    let role = user.role.to_string();
+
+    return match role.as_str() {
+        "ADMIN" => build_admin_menu(user),
+        "USER" => build_user_menu(user),
+        _ => panic!("Invalid role"),
+    };
+}
+
+fn build_admin_menu(user: &User) -> TerminalMenu {
     menu(vec![
         label("--------------------"),
         label(format!(cstr!("<bold,green>Welcome to GameVault, {}!</>"), user.username)),
@@ -76,6 +86,36 @@ fn build_menu(user: &User) -> TerminalMenu {
         button("Create Review"),
     ])
 }
+
+fn build_user_menu(user: &User) -> TerminalMenu {
+    menu(vec![
+        label("--------------------"),
+        label(format!(cstr!("<bold,green>Welcome to GameVault, {}!</>"), user.username)),
+        label(""),
+        label(cstr!(
+            "<italic>Press the <bold>arrow keys</> to navigate the menu</>"
+        )),
+        label(cstr!("<italic>Press <bold>Enter</> to select an item</>")),
+        label(cstr!("<italic>Press <bold,red>Q</> to quit</>")),
+        label("--------------------"),
+        label(""),
+        submenu(
+            "Search Board Games",
+            vec![
+                label("--------------------"),
+                label("Select a search criteria"),
+                label("--------------------"),
+                button("Search by Name"),
+                button("Search by Type"),
+                button("Search by Category"),
+                button("Search by Mechanic"),
+                back_button("Back"),
+            ],
+        ),
+        button("Create Review"),
+    ])
+}
+
 
 /// Get the name of the selected item in the menu.
 /// If the selected item is a submenu, get the name of the selected item in the submenu.
