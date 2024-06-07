@@ -1,6 +1,12 @@
+use dotenvy::dotenv;
+
 pub mod db;
-mod ui;
+pub mod ui;
+pub mod utils;
 
 fn main() {
-    ui::init_menu_loop();
+    dotenv().ok();
+    utils::check_db_connection();
+
+    ui::main();
 }
