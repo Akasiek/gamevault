@@ -15,7 +15,7 @@ pub struct GameReview {
     pub user_id: i32,
     // Number from 1 to 10
     pub rating: i32,
-    pub review: String,
+    pub review: Option<String>,
 }
 
 #[derive(Insertable)]
