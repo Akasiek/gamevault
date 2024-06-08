@@ -14,7 +14,7 @@ pub struct Game {
     pub id: i32,
     pub type_id: i32,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
     pub min_players: i32,
     pub max_players: i32,
     pub playing_time: i32,
@@ -37,7 +37,7 @@ impl Game {
     pub fn display(&self) {
         println!("--------------------");
         cprintln!("<bold,green>{}</>", self.name);
-        cprintln!("<italic>{}</>", self.description);
+        cprintln!("<italic>{}</>", self.description.clone().unwrap_or("No description".to_string()));
         cprintln!("<italic>Players</>: {}-{}", self.min_players, self.max_players);
         cprintln!("<italic>Approximate Playing Time</>: {} minutes", self.playing_time);
         cprintln!("<italic>First Released</>: {}", self.first_year_released);
@@ -55,7 +55,7 @@ impl Game {
 
         println!("--------------------");
         cprintln!("<bold,green>{}</>", self.name);
-        cprintln!("<italic>{}</>", self.description);
+        cprintln!("<italic>{}</>", self.description.clone().unwrap_or("No description".to_string()));
         cprintln!("<italic>Players</>: {}-{}", self.min_players, self.max_players);
         cprintln!("<italic>Approximate Playing Time</>: {} minutes", self.playing_time);
         cprintln!("<italic>First Released</>: {}", self.first_year_released);

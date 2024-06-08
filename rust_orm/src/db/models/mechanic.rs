@@ -9,7 +9,7 @@ use crate::db::schema::{game_mechanics, mechanics};
 pub struct Mechanic {
     pub id: i32,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
 }
 
 impl Mechanic {

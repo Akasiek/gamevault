@@ -4,7 +4,7 @@ diesel::table! {
         id -> Integer,
         type_id -> Integer,
         name -> VarChar,
-        description -> Text,
+        description -> Nullable<Text>,
         min_players -> Integer,
         max_players -> Integer,
         playing_time -> Integer,
@@ -47,7 +47,7 @@ diesel::table! {
     mechanics (id) {
         id -> Integer,
         name -> VarChar,
-        description -> Text,
+        description -> Nullable<Text>,
     }
 }
 
