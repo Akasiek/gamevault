@@ -55,7 +55,7 @@ impl GameCategory {
         use schema::game_categories::*;
 
         // First remove all existing associations
-        diesel::delete(game_categories::table.filter(game_id.eq(game_id)))
+        diesel::delete(game_categories::table.filter(game_id.eq(passed_game_id)))
             .execute(connection)
             .expect("Error deleting game categories");
 
