@@ -11,17 +11,20 @@
 #show: codly-init.with()
 #codly(languages: (
   sql: (name: "SQL", color: rgb("#4d9ddd"), icon: icon("../postgresql_brand.svg")),
+  rust: (name: "Rust", icon: icon("../rust_brand.svg"), color: rgb("#CE412B")),
 ))
-
  
 #set text(lang: "pl")
 #set page(numbering: "1", margin: (x: 2.5cm, y: 2.5cm))
 #set par(justify: true, leading: 0.9em, linebreaks: "optimized")
 #set block(spacing: 1.45em, above: 1.3em)
 // Set font and color for inline code
-#show raw: set text(font: "JetBrains Mono", fill: rgb(42, 150, 70, 255) )
+#show raw: set text(font: "JetBrains Mono", fill: rgb(20, 46, 27, 255) )
 // Change h1 to be centered and uppercase
 #show heading.where(level: 1): set align(center);
+
+// Change color of figure's captions
+#show figure: set text(fill: rgb(80, 80, 80, 255), style: "italic")
 
 
 
@@ -49,7 +52,14 @@
 
 #pagebreak()
 
-= #smallcaps([Część 1.])
+#outline(
+  depth: 3,
+  indent: 2em
+)
+
+#pagebreak()
+
+= #smallcaps([Spotkanie 2.])
 
 == Tematyka i zakres projektu
 
@@ -116,7 +126,7 @@ Wdrożenie projektu końcowego zostanie zrealizowane na platformie *Railway*. Ra
 Kontrola wersji projektu zostanie zrealizowana za pomocą narzędzia *Git* i platformy *GitHub*. Git umożliwia zarządzanie kodem źródłowym projektu, a GitHub umożliwia przechowywanie kodu źródłowego w chmurze. Repozytorium projektu będzie dostępne publicznie pod #underline(link("https://github.com/Akasiek/gamevault", [tym linkiem])).
 
 #pagebreak()
-= #smallcaps([Część 2.])
+= #smallcaps([Spotkanie 3.])
 
 == Prezentacja diagramu ERD
 
@@ -396,7 +406,7 @@ WHERE "Games"."first_year_released" > 2010;
 ```
 
 #pagebreak()
-= #smallcaps([Część 3.])
+= #smallcaps([Spotkanie 4.])
 
 == Zaawansowane zapytania SQL
 
@@ -562,4 +572,714 @@ FROM "Categories"
 INNER JOIN "GameCategories" ON "Categories"."id" = "GameCategories"."category_id"
 INNER JOIN "Games" ON "GameCategories"."game_id" = "Games"."id"
 GROUP BY "Categories"."id";
+```
+
+== Role i uprawnienia
+
+PostgreSQL bazuje na modelu ról i uprawnień, które pozwalają na kontrolę dostępu do danych w bazie. We wcześniejszych wersjach PostgreSQL, był podział na użytkowników i grupy, teraz role zastępują oba te pojęcia i pozwalają na bardziej elastyczne zarządzanie dostępem do danych.
+
+W projekcie stworzyłem dwie role bez uprawnień do logowania (wcześniej takie role nazywały się grupami): `user` i `admin`. Rola `user` ma ograniczony dostęp do danych, może przeglądać tabele, dodawać i aktualizować w tabeli `GameReviews`. Rola `admin` ma pełny dostęp do danych, może przeglądać, dodawać, aktualizować i usuwać dane z wszystkich tabel.
+
+```sql
+CREATE ROLE admins WITH NOLOGIN;
+CREATE ROLE users WITH NOLOGIN;
+
+SET ROLE NONE; -- Reset role to NONE
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO admins;
+GRANT CREATE ON SCHEMA public TO admins;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO admins;
+
+SET ROLE NONE;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO users;
+GRANT INSERT, UPDATE ON "GameReviews" TO users;
+GRANT USAGE, SELECT ON "GameReviews_id_seq" TO users;
+```
+
+Musiałem dodać uprawnienia do sekwencji, ponieważ kolumny `serial` w PostgreSQL są zaimplementowane za pomocą sekwencji, które są automatycznie tworzone przez bazę danych. Bez tych uprawnień, role nie mogą korzystać z kolumn `serial`.
+
+W tym samym pliku SQL, stworzyłem również role z możliwością logowania (użytkowników), które odpowiadają rekordom z tabeli `Users`.
+
+```sql
+-- Create administrators
+SET ROLE NONE;
+CREATE ROLE admin WITH LOGIN PASSWORD 'kamil123' IN ROLE admins; -- Passwords are always encrypted using sha256
+CREATE ROLE brownleopard167 WITH LOGIN PASSWORD 'adriana' IN ROLE admins;
+CREATE ROLE brownelephant395 WITH LOGIN PASSWORD 'marianne' IN ROLE admins;
+...
+
+-- Create users
+SET ROLE NONE;
+CREATE ROLE testuser WITH LOGIN PASSWORD 'test123' IN ROLE users;
+CREATE ROLE bigdog363 WITH LOGIN PASSWORD 'lespaul' IN ROLE users;
+...
+```
+
+Hasła można zapisać tutaj bez funkcji `crypt()`, ponieważ PostgreSQL automatycznie je zaszyfruje.
+
+=== Przykładowe zapytania z wykorzystaniem ról
+
+Na samym końcu pliku SQL, dodałem kilka przykładowych zapytań, które potwierdzają poprawne działanie ról i uprawnień.
+
+```sql
+-- Example of using the admins group
+SET ROLE admin; -- Switch to the admin role
+
+SELECT * FROM "Games";
+
+INSERT INTO "Games" (type_id, name, description, min_players, max_players, playing_time, first_year_released)
+VALUES (1, 'Test Game', 'This is a test game', 2, 4, 60, 2019);
+
+UPDATE "Games" SET description = 'This is a test game that has been updated' WHERE name = 'Test Game';
+
+DELETE FROM "Games" WHERE name = 'Test Game';
+```
+
+Tutaj wszystkie zapytania powinny zostać wykonane bez problemów, ponieważ rola `admin` ma pełne uprawnienia do wszystkich tabel.
+
+```sql
+-- Example of using the users group
+SET ROLE testuser; -- Switch to the testuser role
+
+SELECT * FROM "Games";
+
+SELECT * FROM "GameReviews";
+
+INSERT INTO "GameReviews" (game_id, user_id, rating, review)
+VALUES ((SELECT id FROM "Games" WHERE name = 'Chess'), (SELECT id FROM "Users" WHERE username = 'testuser'), 5, 'This is a great game!');
+
+UPDATE "GameReviews" SET review = 'This is a great game! I love it!' WHERE game_id = (SELECT id FROM "Games" WHERE name = 'Chess') AND user_id = (SELECT id FROM "Users" WHERE username = 'testuser');
+
+-- This will fail because the user group does not have delete permissions on the GameReviews table
+DELETE FROM "GameReviews" WHERE game_id = (SELECT id FROM "Games" WHERE name = 'Chess') AND user_id = (SELECT id FROM "Users" WHERE username = 'testuser');
+
+-- This will fail because the user group does not have insert permissions on the Games table
+INSERT INTO "Games" (type_id, name, description, min_players, max_players, playing_time, first_year_released)
+VALUES (1, 'Test Game', 'This is a test game', 2, 4, 60, 2019);
+
+-- This will fail because the user group does not have update permissions on the Games table
+UPDATE "Games" SET description = 'This is a test game that has been updated' WHERE name = 'Test Game';
+```
+
+Natomiast tutaj niektóre zapytania powinny zakończyć się błędem, ponieważ rola `user` ma ograniczone uprawnienia. Komentarze w kodzie SQL wyjaśniają, które i dlaczego zapytania nie powiodą się.
+
+== Funkcje i procedury
+
+W PostgreSQL można tworzyć funkcje i procedury, które pomagają w automatyzacji zadań i wykonywaniu bardziej skomplikowanych operacji na bazie danych. Funkcje mogą przyjmować argumenty i zwracać wartości, podczas gdy procedury są bardziej podobne do skryptów, które wykonują operacje na bazie danych.
+
+W projekcie stworzyłem plik SQL zawierający kilka przykładowych funkcji i procedur, które mogą być przydatne w pracy z moją bazą danych.
+
+=== Funkcja `get_game_details`
+
+W tej funkcji, zwracam zestaw informacji o grze na podstawie jej nazwy. Funkcja przyjmuje nazwę gry jako argument i zwraca ID gry, nazwę, typ, kategorie, mechaniki oraz wydania w formacie JSON.
+
+```sql
+CREATE OR REPLACE FUNCTION get_game_details(game_name_param VARCHAR(255))
+    RETURNS TABLE
+            (
+                game_id    INTEGER,
+                game_name  VARCHAR(255),
+                game_type  VARCHAR(255),
+                categories VARCHAR[],
+                mechanics  VARCHAR[],
+                releases   JSON
+            )
+AS
+$$
+BEGIN
+    RETURN QUERY
+        SELECT g.id                       AS ID,
+               g.name                     AS Name,
+               gt.name                    AS Type,
+               ARRAY_AGG(DISTINCT c.name) AS Categories,
+               ARRAY_AGG(DISTINCT m.name) AS Mechanics,
+               JSON_AGG(
+                       JSON_BUILD_OBJECT(
+                               'id', gr.id,
+                               'release_date', gr.release_date,
+                               'publisher', gr.publisher,
+                               'studio', gr.studio,
+                               'language', gr.language,
+                               'price', gr.price,
+                               'extra_information', gr.extra_information
+                       )
+               )                          AS Releases
+        FROM "Games" g
+                 JOIN "GameTypes" gt ON g.type_id = gt.id
+                 LEFT JOIN "GameCategories" gc ON g.id = gc.game_id
+                 LEFT JOIN "Categories" c ON gc.category_id = c.id
+                 LEFT JOIN "GameMechanics" gm ON g.id = gm.game_id
+                 LEFT JOIN "Mechanics" m ON gm.mechanic_id = m.id
+                 LEFT JOIN "GameReleases" gr ON g.id = gr.game_id
+        WHERE g.name = game_name_param
+        GROUP BY g.id, gt.name;
+END
+$$ LANGUAGE plpgsql;
+
+-- Example of calling the function
+SELECT * FROM get_game_details('Champions of Midgard');
+```
+
+#figure(
+  image("img/func_1.png"),
+  caption: [Wynik przykładowego zapytania z wykorzystaniem funkcji `get_game_details`]
+)
+
+
+=== Procedura `add_game_review`
+
+Ta procedura za zadanie dodanie recenzji do gry na podstawie nazwy gry, ID użytkownika, oceny i recenzji. Procedura przyjmuje te parametry i dodaje nowy rekord do tabeli `GameReviews`.
+
+```sql
+CREATE OR REPLACE PROCEDURE add_game_review(
+    game_name_param VARCHAR(255),
+    user_id_param INTEGER,
+    rating_param INTEGER,
+    review_param TEXT
+)
+AS
+$$
+BEGIN
+    INSERT INTO "GameReviews" (game_id, user_id, rating, review)
+    VALUES ((SELECT id FROM "Games" WHERE name = game_name_param), user_id_param, rating_param, review_param);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Example of calling the procedure
+CALL add_game_review('Champions of Midgard', 1, 5, 'Great game, highly recommended!');
+```
+
+=== Funkcja `get_games_by_category_and_mechanic`
+
+Kolejna funkcja zwraca listę gier, które należą do danej kategorii i posiadają daną mechanikę. Funkcja przyjmuje nazwę kategorii i mechaniki jako argumenty i zwraca ID gry i nazwę gry.
+
+```sql
+CREATE OR REPLACE FUNCTION get_games_by_category_and_mechanic(
+    category_name_param VARCHAR(255),
+    mechanic_name_param VARCHAR(255)
+)
+    RETURNS TABLE
+            (
+                game_id   INTEGER,
+                game_name VARCHAR(255)
+            )
+AS
+$$
+BEGIN
+    RETURN QUERY
+        SELECT g.id   AS game_id,
+               g.name AS game_name
+        FROM "Games" g
+                 JOIN "GameCategories" gc ON g.id = gc.game_id
+                 JOIN "Categories" c ON gc.category_id = c.id
+                 JOIN "GameMechanics" gm ON g.id = gm.game_id
+                 JOIN "Mechanics" m ON gm.mechanic_id = m.id
+        WHERE c.name = category_name_param
+          AND m.name = mechanic_name_param;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Example of calling the function
+SELECT * FROM get_games_by_category_and_mechanic('Fantasy', 'Hand Management');
+```
+
+#figure(
+  image("img/func_2.png"),
+  caption: [Wynik przykładowego zapytania z wykorzystaniem funkcji `get_games_by_category_and_mechanic`]
+)
+
+=== Procedury `remove_mechanic_from_game`
+
+Procedura `remove_mechanic_from_game` usuwa mechanikę z gry na podstawie nazwy gry i nazwy mechaniki. Procedura znajduje ID gry i ID mechaniki na podstawie nazw i usuwa rekord z tabeli `GameMechanics`.
+
+```sql
+CREATE OR REPLACE PROCEDURE remove_mechanic_from_game(
+    game_name_param VARCHAR(255),
+    mechanic_name_param VARCHAR(255)
+)
+AS
+$$
+BEGIN
+    DELETE
+    FROM "GameMechanics"
+    WHERE game_id = (SELECT id FROM "Games" WHERE name = game_name_param)
+      AND mechanic_id = (SELECT id FROM "Mechanics" WHERE name = mechanic_name_param);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Example of calling the procedure
+CALL remove_mechanic_from_game('Champions of Midgard', 'Worker Placement');
+```
+
+
+=== Procedura `add_mechanic_to_game`
+
+Procedura `add_mechanic_to_game` dodaje mechanikę do gry na podstawie nazwy gry i nazwy mechaniki. Procedura znajduje ID gry i ID mechaniki na podstawie nazw i dodaje nowy rekord do tabeli `GameMechanics`.
+
+```sql
+CREATE OR REPLACE PROCEDURE add_mechanic_to_game(
+    game_name_param VARCHAR(255),
+    mechanic_name_param VARCHAR(255)
+)
+AS
+$$
+BEGIN
+    INSERT INTO "GameMechanics" (game_id, mechanic_id)
+    VALUES ((SELECT id FROM "Games" WHERE name = game_name_param), (SELECT id FROM "Mechanics" WHERE name = mechanic_name_param));
+END;
+$$ LANGUAGE plpgsql;
+
+-- Example of calling the procedure
+CALL add_mechanic_to_game('Champions of Midgard', 'Worker Placement');
+```
+
+== Backup i restore
+
+W tym punkcie posłużyłem się głównie narzędziami dostępnymi w aplikacji do zarządzania bazą danych DataGrip. DataGrip automatycznie wykonuje komendy `pg_dump` i `psql`, które są odpowiedzialne za tworzenie kopii zapasowych i przywracanie danych z kopii zapasowej.
+
+=== Backup
+
+Aby wykonać kopię zapasową bazy danych, wystarczy wybrać odpowiednią opcję w menu kontekstowym bazy danych w DataGrip. 
+
+#figure(
+  image("img/backup_1.png", width: 75%),
+  caption: "Wybór opcji backup z menu kontekstowego bazy danych w DataGrip"
+)
+
+Po wybraniu opcji pojawia się okno dialogowe. W przypadku systemu Windows, DataGrip pytał mnie o lokalizację skryptu `pg_dump`, który jest częścią instalacji PostgreSQL (_możliwe, że brakowało mi skryptu w zmiennych środowiskowych_). Natomiast w przypadku systemu Linux, DataGrip automatycznie wykrył lokalizację skryptu.
+
+W oknie dialogowym można wybrać lokalizację pliku z kopią zapasową, format pliku, opcje tworzenia kopii zapasowej oraz dodatkowe opcje.
+
+#figure(
+  image("img/backup_2.png", width: 75%),
+  caption: "Okno dialogowe backupu bazy danych w DataGrip"
+)
+
+=== Restore
+
+Komenda Restore działa na podobnej zasadzie. W zależności od formatu kopii zapasowej, trzeba przygotować odpowiednio bazę danych. W przypadku plików `.sql`, trzeba utworzyć pustą bazę danych. 
+
+Następnie wybieramy opcję "Restore..." z menu kontekstowego bazy danych i wybieramy plik z kopią zapasową.
+
+#figure(
+  image("img/restore_1.png", width: 58%),
+  caption: "Wybór opcji restore z menu kontekstowego bazy danych w DataGrip"
+)
+
+#figure(
+  image("img/restore_2.png", width: 70%),
+  caption: "Okno dialogowe restore bazy danych w DataGrip"
+)
+
+Po wybraniu pliku, DataGrip automatycznie przywraca bazę danych z kopii zapasowej.
+
+#figure(
+  image("img/restore_3.png", width: 35%),
+  caption: "Dwie bazy danych obok siebie - oryginalna i przywrócona z kopii zapasowej"
+)
+
+== Wersja testowa bazy danych
+
+Testową bazę danych stworzyłem na serwerze lokalnym, korzystając z opcji backupu i restore opisanych powyżej. 
+
+#figure(
+  image("img/test_1.png", width: 75%),
+  caption: "Okno dialogowe restore bazy testowej w DataGrip"
+)
+
+#figure(
+  image("img/test_2.png", width: 60%),
+  caption: "Nowo utworzona i przywrócona testowa baza danych"
+)
+
+#pagebreak()
+
+== Komunikacja z językiem programowania
+
+Komunikacja z bazą danych PostgreSQL jest możliwa z poziomu wielu języków programowania. W projekcie użyłem języka Rust i biblioteki `sqlx` do komunikacji z bazą danych.
+
+Program składa się z jednego pliku `main.rs`. W pliku tym, łączę się z bazą danych, wykonuję kilka zapytań i wyświetlam wyniki.
+
+=== Połączenie z bazą danych
+
+Połączenie z bazą danych z użyciem `sqlx` jest bardzo proste. Wystarczy stworzyć strukturę `Pool` i przekazać adres URL bazy danych. Adres ten jest brany z pliku `.env` dla bezpieczeństwa.
+
+```rust
+async fn get_connection(database_url: &str) -> Pool<Postgres> {
+    PgPoolOptions::new()
+        .max_connections(5)
+        .connect(database_url)
+        .await
+        .expect("Failed to connect to Postgres.")
+}
+```
+
+Struktura `Pool` przechowuje połączenia do bazy danych i zarządza nimi automatycznie. Za jej pomocą można wykonywać zapytania do bazy danych.
+
+=== Przykładowe zapytania
+
+W pliku `main.rs` znajdują się 3 przykładowe zapytania.
+
+==== Zapytanie o 10 najnowszych gier
+
+Funkcja `print_ten_latest_games` wykonuje zapytanie do bazy danych o 10 najnowszych gier i wyświetla ich nazwy i opisy za pomocą makra `cprintln!`, które dodaje kolor do konsoli.
+
+```rust
+async fn print_ten_latest_games(pool: &Pool<Postgres>) {
+    let result = sqlx::query!("SELECT name, description FROM \"Games\" ORDER BY id DESC LIMIT 10")
+        .fetch_all(pool)
+        .await
+        .expect("Failed to fetch games.");
+
+    cprintln!("\n<strong>Latest 10 games:</>\n");
+    for record in result {
+        let description = record.description.unwrap_or_else(|| String::from("No description available."));
+
+        cprintln!("<strong><b>{}</></> - <i>{}</>", record.name, description);
+    }
+
+    println!("\n");
+}
+```
+
+#figure(
+  image("img/simple_rust_1.png"),
+  caption: "Wynik zapytania o 10 najnowszych gier w języku Rust"
+)
+
+==== Zapytanie o kategorie z 5-15 grami
+
+Tym razem funkcja `print_categories_with_5_15_games` wykonuje zapytanie o kategorie, które posiadają od 5 do 15 gier. Wyniki są wyświetlane w konsoli.
+
+```rust
+async fn print_categories_with_5_15_games(pool: &Pool<Postgres>) {
+    let result = sqlx::query!("SELECT c.name, COUNT(g.id) AS game_count FROM \"Categories\" c
+        INNER JOIN \"GameCategories\" gc ON c.id = gc.category_id
+        INNER JOIN \"Games\" g ON gc.game_id = g.id
+        GROUP BY c.id
+        HAVING COUNT(g.id) > 5 AND COUNT(g.id) < 15")
+        .fetch_all(pool)
+        .await
+        .expect("Failed to fetch categories.");
+
+    cprintln!("\n<strong>Categories with more than 5 and less than 15 games:</>\n");
+    for record in result {
+        cprintln!("<strong><b>{}</></> - <i>{:?}</>", record.name, record.game_count.unwrap_or(0));
+    }
+
+    println!("\n");
+}
+```
+
+#figure(
+  image("img/simple_rust_2.png"),
+  caption: "Wynik zapytania o kategorie z 5-15 grami w języku Rust"
+)
+
+#pagebreak()
+==== Zapytanie o użytkowników i ilość recenzji
+
+Ostatnie zapytanie w funkcji `print_users_and_number_of_reviews` zwraca użytkowników z rolą "USER" i ilością napisanych recenzji. Ominięci są użytkownicy, którzy nie napisali żadnej recenzji. Wyniki zapytania są wyświetlane w konsoli.
+
+```rust
+async fn print_users_and_number_of_reviews(pool: &Pool<Postgres>) {
+    let result = sqlx::query!("SELECT u.username, COUNT(gr.id) AS review_count FROM \"Users\" u
+        LEFT JOIN \"GameReviews\" gr ON u.id = gr.user_id
+        WHERE u.role = 'USER'
+        AND gr.id IS NOT NULL
+        GROUP BY u.id")
+        .fetch_all(pool)
+        .await
+        .expect("Failed to fetch users.");
+
+    cprintln!("\n<strong>Users and the number of reviews they have made (exclude users without reviews):</>\n");
+    for record in result {
+        cprintln!("<strong><b>{}</></> - <i>{:?}</>", record.username, record.review_count.unwrap_or(0));
+    }
+
+    println!("\n");
+}
+```
+
+#figure(
+  image("img/simple_rust_3.png"),
+  caption: "Wynik zapytania o użytkowników i ilość recenzji w języku Rust"
+)
+
+#pagebreak()
+
+== Rust ORM
+
+Oprócz krótkiego programu w Rust, który korzysta z biblioteki `sqlx`, można również korzystać z ORM (Object-Relational Mapping) w Rust. Jedną z popularniejszych bibliotek ORM w Rust jest `diesel` i zniej skorzystałem w projekcie. Za jej pomocą stworzyłem prostą aplikację konsolową do zarządzania bazą danych.
+
+Oprócz tego skorzystałem z następujących bibliotek:
+- `dotenvy` - do ładowania zmiennych środowiskowych z pliku `.env`
+- `terminal-menu` - do stworzenia prostego menu w konsoli
+- `inquire` - do interakcji z użytkownikiem
+
+Aplikacja składa się z ponad 1000 linijek kodu.
+
+=== Połączenie z bazą danych
+
+Podobnie jak w przypadku `sqlx`, połączenie z bazą danych w `diesel` jest proste. Tym razem projekt podzieliłem na wiele sekcji i plików, aby zachować porządek. W pliku `db.rs` znajduje się funkcja `establish_admin_connection`, która łączy się z bazą danych jako administrator i zwraca połączenie.
+
+Połączenie administratora jest potrzebne do pierwszej weryfikacji logującego się użytkownika.
+
+```rust
+pub fn establish_admin_connection() -> PgConnection {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+}
+```
+
+Podobnie jak we wcześniejszym programie, URL bazy danych jest pobierany z pliku `.env`.
+
+Po poprawnym połączeniu z bazą danych, aplikacja przechodzi do kroków autoryzacji użytkownika.
+
+=== Autoryzacja użytkownika
+
+Przez fakt, że w bazie danych każdy użytkownik z tabeli `Users` powinien posiadać rola z możliwością logowania do bazy danych. W aplikacji sprawdzane jest czy istnieje i rekord w tabeli `Users`, i rola z możliwością logowania. Oprócz tego sprawdzana jest poprawność hasła i nazwy użytkownika.
+
+```rust
+pub fn check_user(login: &Login) -> bool {
+    check_db_user(login) && check_gamevault_user(login)
+}
+
+// Rola z możliwością logowania do bazy danych
+fn check_db_user(login: &Login) -> bool {
+    login.check_if_can_connect()
+}
+
+// Rekord z tabeli Users
+fn check_gamevault_user(login: &Login) -> bool {
+    User::check_with_credentials(login)
+}
+```
+
+#figure(
+  image("img/orm_1.png"),
+  caption: "Autoryzacja użytkownika w aplikacji konsolowej"
+)
+
+Po zalogowaniu się, użytkownikowi wyświetla się menu aplikacji.
+
+=== Menu aplikacji
+
+Menu aplikacji jest stworzone za pomocą biblioteki `terminal-menu`. Użytkownik może wybrać jedną z opcji, które są wyświetlane w konsoli. W zależności od roli użytkownika, wyświetlane są różne opcje - administracja widzi wszystkie, a użytkownik tylko te, na które ma uprawnienia.
+
+```rust
+fn build_menu(user: &User) -> TerminalMenu {
+    let role = user.role.to_string();
+
+    return match role.as_str() {
+        "ADMIN" => build_admin_menu(user),
+        "USER" => build_user_menu(user),
+        _ => panic!("Invalid role"),
+    };
+}
+
+// Menu dla administratora
+fn build_admin_menu(user: &User) -> TerminalMenu {
+    menu(vec![
+        label("--------------------"),
+        label(format!(cstr!("<bold,green>Welcome to GameVault, {}!</>"), user.username)),
+        label(""),
+        label(cstr!(
+            "<italic>Press the <bold>arrow keys</> to navigate the menu</>"
+        )),
+        label(cstr!("<italic>Press <bold>Enter</> to select an item</>")),
+        label(cstr!("<italic>Press <bold,red>Q</> to quit</>")),
+        label("--------------------"),
+        label(""),
+        submenu(
+            "Search Board Games",
+            vec![
+                label("--------------------"),
+                label("Select a search criteria"),
+                label("--------------------"),
+                button("Search by Name"),
+                button("Search by Type"),
+                button("Search by Category"),
+                button("Search by Mechanic"),
+                back_button("Back"),
+            ],
+        ),
+        button("Create Game"),
+        button("Add Category to Game"),
+        button("Create Review"),
+    ])
+}
+
+// Menu dla użytkownika
+fn build_user_menu(user: &User) -> TerminalMenu {
+  ...
+}
+```
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 20pt,
+  
+  figure(
+    image("img/orm_2.png"),
+    caption: "Menu aplikacji widziane przez administratora"
+  ),
+  figure(
+    image("img/orm_3.png"),
+    caption: "Menu aplikacji widziane przez użytkownika"
+  )
+)
+
+Wszystkie opcje w menu są interaktywne i użytkownik może wybrać jedną z nich za pomocą klawiszy strzałek i klawisza Enter. W zależności od wybranej opcji, aplikacja wykonuje odpowiednie akcje. 
+
+```rust
+fn run_selected_action(selected: String, login: &Login) {
+    let mut conn = login.connect_or_panic();
+    let user = login.get_user().unwrap();
+
+    match selected.as_str() {
+        "Search by Name" => search_games::search_games_by_name(&mut conn),
+        "Search by Type" => search_games::search_games_by_type(&mut conn),
+        "Search by Category" => search_games::search_games_by_category(&mut conn),
+        "Search by Mechanic" => search_games::search_games_by_mechanic(&mut conn),
+        "Create Game" => create_game::main(&mut conn),
+        "Add Category to Game" => add_category_to_game::main(&mut conn),
+        "Create Review" => create_review::main(&mut conn, &user),
+        _ => println!("Invalid selection"),
+    }
+}
+```
+
+Opcja "_Search Board Games_" przenosi użytkownika do podmenu, gdzie może wybrać kryterium wyszukiwania.
+
+#figure(
+  image("img/orm_4.png"),
+  caption: "Podmenu wyszukiwania gier w aplikacji konsolowej"
+)
+
+=== Opcje aplikacji
+
+==== Wyszukiwanie gier 
+
+W aplikacji istnieje wiele sposób na wyszukiwanie gier. Użytkownik może wyszukać grę po nazwie, typie, kategorii lub mechanice. Wyszukiwanie przez nazwę odbywa się standardowo - przez wpisanie części lub całości nazwy gry. Natomiast inne kryteria pozwalają na wybranie opcji z listy. 
+
+#figure(
+  image("img/orm_5.png"),
+  caption: "Wyszukiwanie gier po nazwie (wpisanie nazwy)"
+)
+
+#figure(
+  image("img/orm_6.png", width: 60%),
+  caption: "Wyszukiwanie gier po kategorii (wybranie z listy)"
+)
+
+
+Po wpisaniu/wybraniu kryterium, aplikacja wyświetla wyniki w konsoli.
+
+#figure(
+  image("img/orm_7.png"),
+  caption: "Przykładowe wyniki wyszukiwania gier wyświetlane w konsoli"
+)
+
+==== Dodawanie gry
+
+Opcja "_Create Game_" pozwala na dodanie nowej gry do bazy danych. Użytkownik wprowadza dane o grze, takie jak nazwa, opis, minimalna i maksymalna ilość graczy, czas gry, rok pierwszego wydania oraz typ gry.
+
+#figure(
+  image("img/orm_8.png"),
+  caption: "Widok dodawania nowej gry w aplikacji"
+)
+
+Po wprowadzeniu danych i zatwierdzeniu, aplikacja dodaje nową grę do bazy danych i informuje użytkownika o sukcesie.
+
+==== Dodawanie kategorii do gry
+
+Następna opcja - "_Add Category to Game_" pozwala na dodanie kategorii do istniejącej gry. Użytkownik wybiera grę z listy, a następnie wybiera kategorie z listy wielokrotnego wyboru.
+
+Jako że kategorie posiadają relację wiele do wielu z grami, pierwsze sprawdzamy jakie kategorie są już przypisane do gry i umieszczamy je na liście wyboru jako domyślnie zaznaczone.
+
+Aplikacja po zatwierdzeniu wyboru, pierwsze usuwa wszystkie kategorie przypisane do gry, a następnie dodaje nowe.
+
+#figure(
+  image("img/orm_9.png", width: 90%),
+  caption: "Widok dodawania kategorii do gry w aplikacji"
+)
+
+==== Dodawanie recenzji
+
+Ostatnią opcją jest możliwość dodania recenzji do gry. Użytkownik wybiera grę z listy, a następnie wprowadza ocenę i recenzję.
+
+#figure(
+  image("img/orm_10.png"),
+  caption: "Widok dodawania recenzji do gry w aplikacji"
+)
+
+=== Modele
+
+W aplikacji korzystam z modeli, które reprezentują struktury danych w bazie danych. Modele są zdefiniowane w folderze `models` i zawierają strukturę i metody związane z danymi.
+
+Przykładowy model `game_review`:
+
+```rust
+// Struktura modelu recenzji gry
+#[derive(Identifiable, Selectable, Queryable, Associations, Debug)]
+#[diesel(belongs_to(Game))]
+#[diesel(belongs_to(User))]
+#[diesel(table_name = schema::game_reviews)]
+#[diesel(primary_key(game_id, user_id))]
+pub struct GameReview {
+    pub id: i32,
+    pub game_id: i32,
+    pub user_id: i32,
+    // Number from 1 to 10
+    pub rating: i32,
+    pub review: Option<String>,
+}
+
+// Struktura formularza do dodawania recenzji
+#[derive(Insertable)]
+#[diesel(table_name = schema::game_reviews)]
+pub struct GameReviewForm {
+    pub game_id: i32,
+    pub user_id: i32,
+    pub rating: i32,
+    pub review: Option<String>,
+}
+
+// Implementacja metod dla struktury modelu recenzji gry
+impl GameReview {
+    // Metoda do dodawania recenzji do bazy danych
+    pub fn insert(conn: &mut PgConnection, game_id: i32, user_id: i32, rating: i32, review: Option<String>) -> QueryResult<usize> {
+        let form = GameReviewForm {
+            game_id, user_id, rating, review,
+        };
+
+        diesel::insert_into(schema::game_reviews::table)
+            .values(&form)
+            .execute(conn)
+    }
+}
+```
+
+==== Pomocnicze schematy tabel
+
+Oprócz modeli, `diesel` potrzebuje również schematów tabel, które definiują strukturę bazy danych. Oprócz tego informują też o relacjach i kluczach obcych między tabelami. Schematy są zdefiniowane w pliku `schema.rs`.
+
+Przykładowy schemat tabeli `game_reviews`:
+
+```rust
+diesel::table! {
+    #[sql_name = "GameReviews"]
+    game_reviews (id) {
+        id -> Integer,
+        game_id -> Integer,
+        user_id -> Integer,
+        rating -> Integer,
+        review -> Text,
+    }
+}
+
+diesel::joinable!(game_reviews -> games (game_id));
+diesel::joinable!(game_reviews -> users (user_id));
+diesel::allow_tables_to_appear_in_same_query!(game_reviews, games, users);
 ```

@@ -28,7 +28,7 @@ async fn get_connection(database_url: &str) -> Pool<Postgres> {
 }
 
 async fn print_ten_latest_games(pool: &Pool<Postgres>) {
-    let result = sqlx::query!("SELECT name, description FROM \"Games\" ORDER BY id DESC LIMIT 10")
+    let result = sqlx::query!("SELECT DISTINCT id, name, description FROM \"Games\" ORDER BY id DESC LIMIT 10 ")
         .fetch_all(pool)
         .await
         .expect("Failed to fetch games.");

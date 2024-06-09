@@ -98,8 +98,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Example of calling the function
-SELECT *
-FROM get_games_by_category_and_mechanic('Fantasy', 'Hand Management');
+SELECT * FROM get_games_by_category_and_mechanic('Fantasy', 'Hand Management');
 
 
 --
